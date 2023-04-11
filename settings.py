@@ -13,3 +13,5 @@ class Config:
     ORIGINAL_LINK_LENGTH = 256  # Длина оригинальной ссылки
     SHORT_LINK_LENGTH = 16  # Длина короткой ссылки
     GENERATED_LINK_LENGTH = 6  # Длина короткой ссылки для генерации
+    # Регулярное выражение для короткого имени
+    CUSTOM_ID_PATTERN = r'^[a-zA-Z0-9]+$'

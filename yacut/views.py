@@ -2,6 +2,7 @@ import secrets
 import string
 
 from flask import render_template, flash, url_for, redirect, abort
+from markupsafe import Markup
 
 from . import app, db
 from .forms import URLMapForm
@@ -11,7 +12,7 @@ from settings import Config
 
 SUCCESS_MESSAGE = 'Ваша ссылка укорочена: {url}'
 UNIQUE_ERROR_MESSAGE = 'Такая ссылка уже есть в базе'
-UNIQUE_SHORT_ERROR_MESSAGE = 'Такое сокращение ссылки уже есть в базе'
+UNIQUE_SHORT_ERROR_MESSAGE = 'Имя {name} уже занято!'
 SUCCESS_MESSAGE_STYLE = 'primary'
 ERROR_MESSAGE_STYLE = 'danger'
 LINK_TYPE_ERROR_MESSAGE = 'Неверный тип ссылки: {link_type}'
@@ -45,22 +46,26 @@ def index_view():
     """Главная страница"""
     form = URLMapForm()
     if form.validate_on_submit():
+        if form.custom_id and not is_link_unique(form.custom_id.data, 'short'):
+            flash(
+                UNIQUE_SHORT_ERROR_MESSAGE.format(name=form.custom_id.data),
+                ERROR_MESSAGE_STYLE,
+            )
+            return render_template('index.html', form=form)
         if not is_link_unique(form.original_link.data, 'original'):
             flash(UNIQUE_ERROR_MESSAGE, ERROR_MESSAGE_STYLE)
             return render_template('index.html', form=form)
-        if form.short_link and not is_link_unique(
-            form.short_link.data, 'short'
-        ):
-            flash(UNIQUE_SHORT_ERROR_MESSAGE, ERROR_MESSAGE_STYLE)
-            return render_template('index.html', form=form)
 
-        short_link = form.short_link.data or generate_short_link()
+        short_link = form.custom_id.data or generate_short_link()
         url_map = URLMap(original=form.original_link.data, short=short_link)
         db.session.add(url_map)
         db.session.commit()
+        full_link = full_short_link(short_link)
         flash(
-            SUCCESS_MESSAGE.format(
-                url=full_short_link(short_link)
+            Markup(
+                SUCCESS_MESSAGE.format(
+                    url=f'<a href="{full_link}">{full_link}</a>'
+                )
             ),
             SUCCESS_MESSAGE_STYLE,
         )

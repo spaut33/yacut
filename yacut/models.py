@@ -20,7 +20,7 @@ class URLMap(db.Model):
         """Возвращает словарь с данными модели."""
         return dict(
             url=self.original,
-            short=self.short,
+            short_link=self.short,
         )
 
     def from_dict(self, data, field='url'):

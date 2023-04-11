@@ -26,10 +26,10 @@
                   </p>
                 </div>
                 <div>
-                  {{ form.short_link(class="form-control form-control-lg py-2 mb-3", id="form-link", placeholder="Ваш вариант короткой ссылки") }}
+                  {{ form.custom_id(class="form-control form-control-lg py-2 mb-3", id="form-link", placeholder="Ваш вариант короткой ссылки") }}
                   <p>
-                    {% if form.short_link.errors %}
-                      {% for error in form.short_link.errors %}
+                    {% if form.custom_id.errors %}
+                      {% for error in form.custom_id.errors %}
                         <span style="color: #995252">{{ error }}</span>
                       {% endfor %}
                     {% endif %}

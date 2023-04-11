@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, URLField
-from wtforms.validators import DataRequired, Length, Optional
+from wtforms.validators import DataRequired, Length, Optional, Regexp
 
 from settings import Config
 
@@ -20,7 +20,7 @@ class URLMapForm(FlaskForm):
             ),
         ],
     )
-    short_link = StringField(
+    custom_id = StringField(
         'Введите короткое имя',
         validators=[
             Optional(),
@@ -29,6 +29,13 @@ class URLMapForm(FlaskForm):
                 max=Config.SHORT_LINK_LENGTH,
                 message=f'Короткое имя должно быть длиной от 1 до '
                 f'{Config.SHORT_LINK_LENGTH} символов',
+            ),
+            Regexp(
+                Config.CUSTOM_ID_PATTERN,
+                message=(
+                    'Короткое имя должно состоять только из латинских '
+                    'букв и цифр'
+                ),
             ),
         ],
     )
