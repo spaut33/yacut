@@ -43,13 +43,14 @@ class URLMap(db.Model):
     @staticmethod
     def generate_short():
         """Генерирует уникальный короткий идентификатор"""
-        while True:
+        i = 0
+        while i < Config.GENERATE_SHORT_RETRIES:
             short_link = ''.join(
                 choices(Config.ALLOWED_SYMBOLS, k=Config.SHORT_LENGTH)
             )
             if URLMap.get_urlmap_by_short(short_link) is None:
-                break
-        return short_link
+                return short_link
+            i += 1
 
     def short_link(self):
         """Возвращает полную сокращенную ссылку, включая схему и хост"""
