@@ -8,9 +8,12 @@ URL_FIELD_TEXT = 'Введите URL'
 CUSTOM_ID_TEXT = 'Введите короткое имя'
 SUBMIT_TEXT = 'Создать'
 FIELD_REQUIRED = 'Обязательное поле'
-URL_LENGTH_MESSAGE = 'URL должен быть длиной от 1 до {length} символов'
+URL_LENGTH_MESSAGE = (
+    f'URL должен быть длиной от 1 до {Config.ORIGINAL_LINK_LENGTH} символов'
+)
 CUSTOM_ID_LENGTH_MESSAGE = (
-    'Короткое имя должно быть длиной от 1 до {length} символов'
+    f'Короткое имя должно быть длиной от 1 до '
+    'Config.USER_SHORT_LENGTH} символов'
 )
 CUSTOM_ID_REGEXP_MESSAGE = (
     'Короткое имя должно состоять только из латинских букв и цифр'
@@ -25,10 +28,7 @@ class URLMapForm(FlaskForm):
         validators=[
             DataRequired(message=FIELD_REQUIRED),
             Length(
-                max=Config.ORIGINAL_LINK_LENGTH,
-                message=URL_LENGTH_MESSAGE.format(
-                    length=Config.ORIGINAL_LINK_LENGTH
-                ),
+                max=Config.ORIGINAL_LINK_LENGTH, message=URL_LENGTH_MESSAGE
             ),
         ],
     )
@@ -37,12 +37,9 @@ class URLMapForm(FlaskForm):
         validators=[
             Optional(),
             Length(
-                max=Config.SHORT_LINK_LENGTH,
-                message=CUSTOM_ID_LENGTH_MESSAGE.format(
-                    length=Config.SHORT_LINK_LENGTH
-                ),
+                max=Config.USER_SHORT_LENGTH, message=CUSTOM_ID_LENGTH_MESSAGE
             ),
-            Regexp(Config.CUSTOM_ID_PATTERN, message=CUSTOM_ID_REGEXP_MESSAGE),
+            Regexp(Config.SHORT_PATTERN, message=CUSTOM_ID_REGEXP_MESSAGE),
         ],
     )
     submit = SubmitField(SUBMIT_TEXT)
