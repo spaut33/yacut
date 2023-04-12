@@ -1,17 +1,9 @@
-import re
-
 from flask import jsonify, request
 
 from settings import Config
-from . import app, db
+from . import app
 from .error_handlers import InvalidAPIUsage
 from .models import URLMap
-from .views import (
-    UNIQUE_ERROR_MESSAGE,
-    full_short_link,
-    generate_short_link,
-    is_link_unique,
-)
 
 URL_NOT_FOUND = 'Указанный id не найден'
 BODY_NOT_FOUND = 'Отсутствует тело запроса'
@@ -23,17 +15,16 @@ NON_ALPHANUMERIC_ERROR_MESSAGE = 'Указано недопустимое имя
 
 def validate_alphanumeric(data):
     """Проверка данных на соответствие шаблону."""
-    pattern = re.compile(Config.CUSTOM_ID_PATTERN)
-    return pattern.match(data) is not None
+    return Config.CUSTOM_ID_PATTERN.match(data) is not None
 
 
 @app.route('/api/id/<short_link>/', methods=['GET'])
 def get_url(short_link):
     """Получение ссылки по короткой ссылке"""
-    url_map = URLMap.query.filter_by(short=short_link).first()
+    url_map = URLMap.get_link_by_short(short_link)
     if url_map is None:
         raise InvalidAPIUsage(URL_NOT_FOUND, 404)
-    return jsonify({'url': url_map.to_dict()['url']}), 200
+    return jsonify({'url': url_map.original}), 200
 
 
 @app.route('/api/id/', methods=['POST'])
@@ -46,7 +37,7 @@ def create_url():
     if 'url' not in data:
         raise InvalidAPIUsage(DATA_NOT_FOUND)
     custom_id = data.get('custom_id')
-    if custom_id and not is_link_unique(custom_id, 'short'):
+    if custom_id and not URLMap.is_short_link_unique(custom_id):
         raise InvalidAPIUsage(
             UNIQUE_SHORT_ERROR_MESSAGE.format(name=custom_id)
         )
@@ -54,20 +45,15 @@ def create_url():
         raise InvalidAPIUsage(TOO_LONG_ERROR_MESSAGE)
     if custom_id and not validate_alphanumeric(custom_id):
         raise InvalidAPIUsage(NON_ALPHANUMERIC_ERROR_MESSAGE)
-    if not is_link_unique(data['url'], 'original'):
-        raise InvalidAPIUsage(UNIQUE_ERROR_MESSAGE)
+    if not URLMap.is_original_link_unique(data['url']):
+        raise InvalidAPIUsage(Config.UNIQUE_ERROR_MESSAGE)
 
-    url_map = URLMap(
-        original=data['url'], short=custom_id or generate_short_link()
+    url_map = URLMap.create(
+        original=data['url'], short=custom_id or URLMap.generate_short_link()
     )
-    db.session.add(url_map)
-    db.session.commit()
     return (
         jsonify(
-            {
-                'url': url_map.to_dict()['url'],
-                'short_link': full_short_link(url_map.to_dict()['short_link']),
-            }
+            {'url': url_map.original, 'short_link': url_map.full_short_link()}
         ),
         201,
     )

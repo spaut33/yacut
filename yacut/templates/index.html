@@ -58,6 +58,12 @@
                   </div>
                 {% endif %}
               {% endwith %}
+              {% if full_link %}
+                <div class="alert alert-primary">
+                  Ваша ссылка укорочена:<br>
+                  <a href="{{ full_link }}">{{ full_link }}</a>
+                </div>
+              {% endif %}
             </h5>
           </div>
           <div class="col-sm"></div>
