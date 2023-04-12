@@ -3,6 +3,7 @@ from wtforms import StringField, SubmitField, URLField
 from wtforms.validators import DataRequired, Length, Optional, Regexp
 
 from settings import Config
+from yacut.validators import ValidateShort, ValidateOriginal
 
 URL_FIELD_TEXT = 'Введите URL'
 CUSTOM_ID_TEXT = 'Введите короткое имя'
@@ -12,8 +13,8 @@ URL_LENGTH_MESSAGE = (
     f'URL должен быть длиной от 1 до {Config.ORIGINAL_LINK_LENGTH} символов'
 )
 CUSTOM_ID_LENGTH_MESSAGE = (
-    f'Короткое имя должно быть длиной от 1 до '
-    'Config.USER_SHORT_LENGTH} символов'
+    'Короткое имя должно быть длиной от 1 до '
+    f'{Config.USER_SHORT_LENGTH} символов'
 )
 CUSTOM_ID_REGEXP_MESSAGE = (
     'Короткое имя должно состоять только из латинских букв и цифр'
@@ -30,6 +31,7 @@ class URLMapForm(FlaskForm):
             Length(
                 max=Config.ORIGINAL_LINK_LENGTH, message=URL_LENGTH_MESSAGE
             ),
+            ValidateOriginal(),
         ],
     )
     custom_id = StringField(
@@ -40,6 +42,7 @@ class URLMapForm(FlaskForm):
                 max=Config.USER_SHORT_LENGTH, message=CUSTOM_ID_LENGTH_MESSAGE
             ),
             Regexp(Config.SHORT_PATTERN, message=CUSTOM_ID_REGEXP_MESSAGE),
+            ValidateShort(),
         ],
     )
     submit = SubmitField(SUBMIT_TEXT)
