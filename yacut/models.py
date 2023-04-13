@@ -11,11 +11,10 @@ FORM_SHORT_ERROR_MESSAGE = 'Имя {name} уже занято!'
 UNIQUE_ERROR_MESSAGE = 'Такая ссылка уже есть в базе'
 URL_ERROR_MESSAGE = 'Введен неправильный URL'
 API_SHORT_ERROR_MESSAGE = 'Имя "{name}" уже занято.'
-
-
-def validate_alphanumeric(data):
-    """Проверка данных на соответствие шаблону."""
-    return Config.SHORT_PATTERN.match(data) is not None
+SHORT_GENERATION_ERROR = (
+    'Не удалось сгенерировать короткую ссылку за '
+    f'{Config.GENERATE_SHORT_RETRIES} попыток'
+)
 
 
 class URLMap(db.Model):
@@ -43,28 +42,27 @@ class URLMap(db.Model):
     @staticmethod
     def generate_short():
         """Генерирует уникальный короткий идентификатор"""
-        i = 0
-        while i < Config.GENERATE_SHORT_RETRIES:
+        for _ in range(Config.GENERATE_SHORT_RETRIES):
             short_link = ''.join(
                 choices(Config.ALLOWED_SYMBOLS, k=Config.SHORT_LENGTH)
             )
             if URLMap.get_urlmap_by_short(short_link) is None:
                 return short_link
-            i += 1
+        raise ValueError(SHORT_GENERATION_ERROR)
 
     def short_link(self):
         """Возвращает полную сокращенную ссылку, включая схему и хост"""
         return url_for(Config.REDIRECT_VIEW, short=self.short, _external=True)
 
     @staticmethod
-    def validate_short(short, is_api=False):
+    def validate_short(short, validate=False):
         """Проверяет короткую ссылку на соответствие требованиям"""
         if len(short) > Config.USER_SHORT_LENGTH:
             raise ValueError(SHORT_ERROR_MESSAGE)
-        if not validate_alphanumeric(short):
+        if Config.SHORT_PATTERN.match(short) is None:
             raise ValueError(SHORT_ERROR_MESSAGE)
         if URLMap.get_urlmap_by_short(short) is not None:
-            if is_api:
+            if validate:
                 raise ValueError(API_SHORT_ERROR_MESSAGE.format(name=short))
             raise ValueError(FORM_SHORT_ERROR_MESSAGE.format(name=short))
 
@@ -77,11 +75,12 @@ class URLMap(db.Model):
             raise ValueError(UNIQUE_ERROR_MESSAGE.format(name=original))
 
     @staticmethod
-    def create(original, short=None, is_api=False):
+    def create(original, short=None, validate=False):
         """Создает новую запись в БД"""
         if short:
-            URLMap.validate_short(short, is_api=is_api)
-        URLMap.validate_original(original)
+            URLMap.validate_short(short, validate=validate)
+        if validate:
+            URLMap.validate_original(original)
         url_map = URLMap(
             original=original, short=short or URLMap.generate_short()
         )

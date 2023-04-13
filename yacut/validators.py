@@ -5,12 +5,12 @@ from .models import URLMap
 
 class ValidateShort:
     """Валидатор для проверки короткого идентификатора."""
-    def __init__(self, is_api=False):
-        self.is_api = is_api
+    def __init__(self, validate=False):
+        self.validate = validate
 
     def __call__(self, form, field):
         try:
-            URLMap.validate_short(field.data, is_api=self.is_api)
+            URLMap.validate_short(field.data, validate=self.validate)
         except ValueError as error:
             raise ValidationError(str(error))
 

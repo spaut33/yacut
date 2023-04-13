@@ -17,7 +17,7 @@ class Config:
     USER_SHORT_LENGTH = 16  # Длина короткой ссылки
     SHORT_LENGTH = 6  # Длина короткой ссылки для генерации
     GENERATE_SHORT_RETRIES = 10  # Количество попыток генерации короткой ссылки
-    ALLOWED_SYMBOLS = re.escape(ascii_letters + digits)
-    SHORT_PATTERN = re.compile(rf'^[{ALLOWED_SYMBOLS}]+$')
+    ALLOWED_SYMBOLS = ascii_letters + digits
+    SHORT_PATTERN = re.compile(rf'^[{re.escape(ALLOWED_SYMBOLS)}]+$')
 
     REDIRECT_VIEW = 'redirect_view'  # Имя вьюхи для редиректа

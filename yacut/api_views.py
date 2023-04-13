@@ -31,8 +31,8 @@ def create_url():
     try:
         url_map = URLMap.create(
             original=data['url'],
-            short=short or URLMap.generate_short(),
-            is_api=True,
+            short=short,
+            validate=True,
         )
         return (
             jsonify(
