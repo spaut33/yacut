@@ -6,6 +6,8 @@ from flask import url_for
 from settings import Config
 from yacut import db
 
+from .exceptions import ShortError
+
 SHORT_ERROR_MESSAGE = 'Указано недопустимое имя для короткой ссылки'
 URL_ERROR_MESSAGE = 'Введен неправильный URL'
 SHORT_GENERATION_ERROR = (
@@ -52,14 +54,14 @@ class URLMap(db.Model):
         return url_for(Config.REDIRECT_VIEW, short=self.short, _external=True)
 
     @staticmethod
-    def validate_short(short, error_message=None):
+    def validate_short(short):
         """Проверяет короткую ссылку на соответствие требованиям"""
         if len(short) > Config.USER_SHORT_LENGTH:
             raise ValueError(SHORT_ERROR_MESSAGE)
         if Config.SHORT_PATTERN.match(short) is None:
             raise ValueError(SHORT_ERROR_MESSAGE)
         if URLMap.get_urlmap_by_short(short) is not None:
-            raise ValueError(error_message)
+            raise ShortError()
 
     @staticmethod
     def validate_original(original):
@@ -68,12 +70,14 @@ class URLMap(db.Model):
             raise ValueError(URL_ERROR_MESSAGE)
 
     @staticmethod
-    def create(original, short, validate=False, error_message=None):
+    def create(original, short, validate=False):
         """Создает новую запись в БД"""
-        short = short or URLMap.generate_short()
         if validate:
-            URLMap.validate_short(short, error_message=error_message)
             URLMap.validate_original(original)
+        if not short:
+            short = URLMap.generate_short()
+        elif validate:
+            URLMap.validate_short(short)
         url_map = URLMap(original=original, short=short)
         db.session.add(url_map)
         db.session.commit()

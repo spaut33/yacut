@@ -24,7 +24,6 @@ def upgrade():
     sa.Column('short', sa.String(length=16), nullable=False),
     sa.Column('timestamp', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('original'),
     sa.UniqueConstraint('short')
     )
     op.create_index(op.f('ix_url_map_timestamp'), 'url_map', ['timestamp'], unique=False)

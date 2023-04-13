@@ -2,6 +2,7 @@ from flask import jsonify, request
 
 from . import app
 from .error_handlers import InvalidAPIUsage
+from .exceptions import ShortError
 from .models import URLMap
 
 URL_NOT_FOUND = 'Указанный id не найден'
@@ -34,7 +35,6 @@ def create_url():
             original=data['url'],
             short=short,
             validate=True,
-            error_message=API_SHORT_ERROR_MESSAGE.format(name=short),
         )
         return (
             jsonify(
@@ -44,3 +44,5 @@ def create_url():
         )
     except ValueError as error:
         raise InvalidAPIUsage(str(error))
+    except ShortError:
+        raise InvalidAPIUsage(API_SHORT_ERROR_MESSAGE.format(name=short))
