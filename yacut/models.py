@@ -7,10 +7,7 @@ from settings import Config
 from yacut import db
 
 SHORT_ERROR_MESSAGE = 'Указано недопустимое имя для короткой ссылки'
-FORM_SHORT_ERROR_MESSAGE = 'Имя {name} уже занято!'
-UNIQUE_ERROR_MESSAGE = 'Такая ссылка уже есть в базе'
 URL_ERROR_MESSAGE = 'Введен неправильный URL'
-API_SHORT_ERROR_MESSAGE = 'Имя "{name}" уже занято.'
 SHORT_GENERATION_ERROR = (
     'Не удалось сгенерировать короткую ссылку за '
     f'{Config.GENERATE_SHORT_RETRIES} попыток'
@@ -22,7 +19,7 @@ class URLMap(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     original = db.Column(
-        db.String(Config.ORIGINAL_LINK_LENGTH), unique=True, nullable=False
+        db.String(Config.ORIGINAL_LINK_LENGTH), unique=False, nullable=False
     )
     short = db.Column(
         db.String(Config.USER_SHORT_LENGTH), unique=True, nullable=False
@@ -55,35 +52,29 @@ class URLMap(db.Model):
         return url_for(Config.REDIRECT_VIEW, short=self.short, _external=True)
 
     @staticmethod
-    def validate_short(short, validate=False):
+    def validate_short(short, error_message=None):
         """Проверяет короткую ссылку на соответствие требованиям"""
         if len(short) > Config.USER_SHORT_LENGTH:
             raise ValueError(SHORT_ERROR_MESSAGE)
         if Config.SHORT_PATTERN.match(short) is None:
             raise ValueError(SHORT_ERROR_MESSAGE)
         if URLMap.get_urlmap_by_short(short) is not None:
-            if validate:
-                raise ValueError(API_SHORT_ERROR_MESSAGE.format(name=short))
-            raise ValueError(FORM_SHORT_ERROR_MESSAGE.format(name=short))
+            raise ValueError(error_message)
 
     @staticmethod
     def validate_original(original):
         """Проверяет оригинальную ссылку на соответствие требованиям"""
         if len(original) > Config.ORIGINAL_LINK_LENGTH:
             raise ValueError(URL_ERROR_MESSAGE)
-        if URLMap.get_urlmap_by_original(original) is not None:
-            raise ValueError(UNIQUE_ERROR_MESSAGE.format(name=original))
 
     @staticmethod
-    def create(original, short=None, validate=False):
+    def create(original, short, validate=False, error_message=None):
         """Создает новую запись в БД"""
-        if short:
-            URLMap.validate_short(short, validate=validate)
+        short = short or URLMap.generate_short()
         if validate:
+            URLMap.validate_short(short, error_message=error_message)
             URLMap.validate_original(original)
-        url_map = URLMap(
-            original=original, short=short or URLMap.generate_short()
-        )
+        url_map = URLMap(original=original, short=short)
         db.session.add(url_map)
         db.session.commit()
         return url_map

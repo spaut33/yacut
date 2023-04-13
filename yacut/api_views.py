@@ -7,6 +7,7 @@ from .models import URLMap
 URL_NOT_FOUND = 'Указанный id не найден'
 BODY_NOT_FOUND = 'Отсутствует тело запроса'
 DATA_NOT_FOUND = '"url" является обязательным полем!'
+API_SHORT_ERROR_MESSAGE = 'Имя "{name}" уже занято.'
 
 
 @app.route('/api/id/<short_link>/', methods=['GET'])
@@ -33,6 +34,7 @@ def create_url():
             original=data['url'],
             short=short,
             validate=True,
+            error_message=API_SHORT_ERROR_MESSAGE.format(name=short),
         )
         return (
             jsonify(
